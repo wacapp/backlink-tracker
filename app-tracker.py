@@ -324,9 +324,7 @@ def guardar_resultados_en_excel(resultados, dominio, processed_data):
     for month_year, data in resultados.items():
         
         # Check if there's corresponding processed data for the month_year
-        if month_year in processed_data and not data.empty:  # Verificar si el DataFrame no está vacío
-            # Add the extracted columns after the 'Position' column
-            position_index = data.columns.get_loc('Position')
+        if month_year in processed_data:
             processed_data[month_year] = processed_data[month_year].reset_index(drop=True)
             
             # Asegurarse de que 'data' tenga al menos la misma cantidad de filas que 'processed_data[month_year]'
@@ -337,10 +335,10 @@ def guardar_resultados_en_excel(resultados, dominio, processed_data):
                 # Concatena las filas adicionales a 'data'
                 data = pd.concat([data, additional_rows], ignore_index=True)
 
-            # Luego inserta las columnas como lo haces actualmente
-            for col in reversed(processed_data[month_year].columns):
-                data.insert(position_index + 1, col, processed_data[month_year][col])
-        
+            # Agregar las columnas al final del DataFrame
+            for col in processed_data[month_year].columns:
+                data[col] = processed_data[month_year][col]
+
             # Write the modified data to the Excel file
             data.to_excel(writer, sheet_name=month_year, index=False)
     
