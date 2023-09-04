@@ -261,7 +261,9 @@ def fetch_gsc_data_for_sheets(gsc_service, month_year_sheets):
                     print(f"Error al obtener datos para {url}: {e}")
 
         # Actualizar el contenedor `all_results` con los datos de esta hoja
-        all_results[sheet_name] = pd.concat(sheet_results, ignore_index=True)
+
+        if sheet_results:
+            all_results[sheet_name] = pd.concat(sheet_results, ignore_index=True)
 
     return all_results
 
