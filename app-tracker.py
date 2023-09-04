@@ -322,9 +322,9 @@ def guardar_resultados_en_excel(resultados, dominio, processed_data):
     
     # Iterate through each item in the results
     for month_year, data in resultados.items():
-
+        
         # Check if there's corresponding processed data for the month_year
-        if month_year in processed_data:
+        if month_year in processed_data and not data.empty:  # Verificar si el DataFrame no está vacío
             # Add the extracted columns after the 'Position' column
             position_index = data.columns.get_loc('Position')
             processed_data[month_year] = processed_data[month_year].reset_index(drop=True)
@@ -341,15 +341,14 @@ def guardar_resultados_en_excel(resultados, dominio, processed_data):
             for col in reversed(processed_data[month_year].columns):
                 data.insert(position_index + 1, col, processed_data[month_year][col])
         
-        # Write the modified data to the Excel file
-        data.to_excel(writer, sheet_name=month_year, index=False)
+            # Write the modified data to the Excel file
+            data.to_excel(writer, sheet_name=month_year, index=False)
     
     # Save the Excel file
     writer.close()
 
     print(f"Resultados guardados en {nombre_archivo}")
     return nombre_archivo
-
 
 def main():
        
