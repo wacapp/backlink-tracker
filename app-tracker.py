@@ -324,7 +324,7 @@ def guardar_resultados_en_excel(resultados, dominio, processed_data):
         # Check if there's corresponding processed data for the month_year
         if month_year in processed_data:
             # Add the extracted columns after the 'Position' column
-            position_index = data.columns.get_loc('Position')
+            position_index = data.columns.get_loc(7)
             processed_data[month_year] = processed_data[month_year].reset_index(drop=True)
             
             # Asegurarse de que 'data' tenga al menos la misma cantidad de filas que 'processed_data[month_year]'
