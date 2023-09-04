@@ -341,6 +341,11 @@ def guardar_resultados_en_excel(resultados, dominio, processed_data):
 
             # Write the modified data to the Excel file
             data.to_excel(writer, sheet_name=month_year, index=False)
+
+    # Antes de guardar el archivo, asegurarse de que al menos una hoja es visible
+    if not any(ws.sheet_state == 'visible' for ws in writer.book.worksheets):
+    writer.book.active = writer.book.worksheets[0]
+    writer.book.active.sheet_state = 'visible'
     
     # Save the Excel file
     writer.close()
