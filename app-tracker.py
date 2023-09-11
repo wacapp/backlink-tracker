@@ -141,7 +141,7 @@ def get_backlinks_data_gsc(gsc_service, domain, url, start_date):
         }
 
         # Ejecutar la solicitud
-        response = gsc_service.searchanalytics().query(siteUrl="akelare.com", body=request).execute()
+        response = gsc_service.searchanalytics().query(siteUrl=domain, body=request).execute()
 
         def count_keywords_for_url(gsc_service, domain, url): 
             
