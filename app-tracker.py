@@ -141,7 +141,7 @@ def get_backlinks_data_gsc(gsc_service, domain, url, start_date):
         }
 
         # Ejecutar la solicitud
-        response = gsc_service.searchanalytics().query(siteUrl=domain, body=request).execute()
+        response = gsc_service.searchanalytics().query(siteUrl="akelare.com", body=request).execute()
 
         def count_keywords_for_url(gsc_service, domain, url): 
             
@@ -159,7 +159,7 @@ def get_backlinks_data_gsc(gsc_service, domain, url, start_date):
                 'rowLimit': 1000  # el máximo permitido
             }
             
-            response_query = gsc_service.searchanalytics().query(siteUrl=domain, body=request_query).execute()
+            response_query = gsc_service.searchanalytics().query(siteUrl="akelare.com", body=request_query).execute()
             
             if 'rows' in response_query:
                 return len(response_query['rows'])
