@@ -1,15 +1,16 @@
 import streamlit as st
-
 import pandas as pd
 import numpy as np
 import openpyxl
 import re
 import pickle
 import os
+import argparse
 from urllib.parse import urlparse
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from google.auth.transport.requests import Request 
 import nltk
 import base64
 from datetime import datetime, timedelta
@@ -97,6 +98,30 @@ def process_and_organize_data(file_path):
     print("ya se ejecuto la primera funcion")
     return month_year_sheets
 
+def list_sites(service):
+    sites = service.sites().list().execute()
+    
+    # Extraemos las URLs de la propiedad 'siteUrl' y solo agregamos aquellos que no estén vacíos
+    cleaned_sites = [site['siteUrl'] for site in sites['siteEntry'] if site['siteUrl'].strip()]
+    return cleaned_sites
+    
+def encontrar_dominio(url):
+
+    dominios = list_sites(gsc_service)
+    print(dominios)
+    # Extraemos el dominio de la URL sin el protocolo (https y http)
+    parsed_url = urlparse(url)
+    dominio_bruto = parsed_url.netloc or parsed_url.path  # Considera URLs sin "http://"
+    
+    # Considera tanto el dominio principal como subdominios
+    partes_dominio = dominio_bruto.split('.')
+    dominio_principal = ".".join(partes_dominio[-2:])
+    
+    for dominio in dominios:
+        if dominio_principal in dominio or dominio_bruto in dominio:
+            return dominio
+    return None
+
 def get_domain(url):
     parsed_uri = urlparse(url)
     domain = '{uri.scheme}://{uri.netloc}/'.format(uri=parsed_uri)
@@ -105,6 +130,10 @@ def get_domain(url):
 # Función para filtrar un DataFrame por un dominio específico
 def filtrar_por_dominio(df, dominio):
     return df[df['domain'] == dominio]
+
+url_verificar = dominio_a_consultar
+dominio_correspondiente = encontrar_dominio(url_verificar)
+print(dominio_correspondiente)
 
 def get_backlinks_data_gsc(gsc_service, domain, url, start_date):
     
@@ -141,7 +170,7 @@ def get_backlinks_data_gsc(gsc_service, domain, url, start_date):
         }
 
         # Ejecutar la solicitud
-        response = gsc_service.searchanalytics().query(siteUrl=domain, body=request).execute()
+        response = gsc_service.searchanalytics().query(siteUrl=dominio_correspondiente, body=request).execute()
 
         def count_keywords_for_url(gsc_service, domain, url): 
             
@@ -159,7 +188,7 @@ def get_backlinks_data_gsc(gsc_service, domain, url, start_date):
                 'rowLimit': 1000  # el máximo permitido
             }
             
-            response_query = gsc_service.searchanalytics().query(siteUrl=domain, body=request_query).execute()
+            response_query = gsc_service.searchanalytics().query(siteUrl=dominio_correspondiente, body=request_query).execute()
             
             if 'rows' in response_query:
                 return len(response_query['rows'])
@@ -261,9 +290,7 @@ def fetch_gsc_data_for_sheets(gsc_service, month_year_sheets):
                     print(f"Error al obtener datos para {url}: {e}")
 
         # Actualizar el contenedor `all_results` con los datos de esta hoja
-
-        if sheet_results:
-            all_results[sheet_name] = pd.concat(sheet_results, ignore_index=True)
+        all_results[sheet_name] = pd.concat(sheet_results, ignore_index=True)
 
     return all_results
 
@@ -322,9 +349,11 @@ def guardar_resultados_en_excel(resultados, dominio, processed_data):
     
     # Iterate through each item in the results
     for month_year, data in resultados.items():
-        
+
         # Check if there's corresponding processed data for the month_year
         if month_year in processed_data:
+            # Add the extracted columns after the 'Position' column
+            position_index = data.columns.get_loc('Position')
             processed_data[month_year] = processed_data[month_year].reset_index(drop=True)
             
             # Asegurarse de que 'data' tenga al menos la misma cantidad de filas que 'processed_data[month_year]'
@@ -335,23 +364,19 @@ def guardar_resultados_en_excel(resultados, dominio, processed_data):
                 # Concatena las filas adicionales a 'data'
                 data = pd.concat([data, additional_rows], ignore_index=True)
 
-            # Agregar las columnas al final del DataFrame
-            for col in processed_data[month_year].columns:
-                data[col] = processed_data[month_year][col]
-
-            # Write the modified data to the Excel file
-            data.to_excel(writer, sheet_name=month_year, index=False)
-
-    # Antes de guardar el archivo, asegurarse de que al menos una hoja es visible
-    if writer.book.worksheets and not any(ws.sheet_state == 'visible' for ws in writer.book.worksheets):
-        writer.book.active = writer.book.worksheets[0]
-        writer.book.active.sheet_state = 'visible'
+            # Luego inserta las columnas como lo haces actualmente
+            for col in reversed(processed_data[month_year].columns):
+                data.insert(position_index + 1, col, processed_data[month_year][col])
+        
+        # Write the modified data to the Excel file
+        data.to_excel(writer, sheet_name=month_year, index=False)
     
     # Save the Excel file
     writer.close()
 
     print(f"Resultados guardados en {nombre_archivo}")
     return nombre_archivo
+
 
 def main():
        
