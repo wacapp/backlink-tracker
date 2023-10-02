@@ -117,20 +117,19 @@ def encontrar_dominio(url):
     if dominio_bruto in dominios:
         print('dominio_bruto')
         return dominio_bruto
+        
     
     # Considera tanto el dominio principal como subdominios
     partes_dominio = dominio_bruto.split('.')
     dominio_principal = ".".join(partes_dominio[-2:])
     
-    coincidencias = []
-    for dominio in dominios:
-        if dominio_principal in dominio:
-            coincidencias.append(dominio)
+    coincidencias = [dominio for dominio in dominios if dominio_principal in dominio]
+    if not coincidencias:
+        return None
     
-    # Devuelve la coincidencia más larga, si hay alguna
-    if coincidencias:
-        return max(coincidencias, key=len)
-    return None
+    # Devuelve la coincidencia que tiene la mayor similitud con la URL proporcionada
+    # y en caso de empate, devuelve la coincidencia más corta
+    return min(coincidencias, key=lambda dominio: (-len(set(dominio_bruto) & set(dominio)), len(dominio)))
 
 def get_domain(url):
     parsed_uri = urlparse(url)
