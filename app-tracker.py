@@ -108,18 +108,27 @@ def list_sites(service):
 def encontrar_dominio(url):
 
     dominios = list_sites(gsc_service)
-    print(dominios)
+    
     # Extraemos el dominio de la URL sin el protocolo (https y http)
     parsed_url = urlparse(url)
     dominio_bruto = parsed_url.netloc or parsed_url.path  # Considera URLs sin "http://"
+    
+    # Si hay una coincidencia exacta, devuélvela
+    if dominio_bruto in dominios:
+        return dominio_bruto
     
     # Considera tanto el dominio principal como subdominios
     partes_dominio = dominio_bruto.split('.')
     dominio_principal = ".".join(partes_dominio[-2:])
     
+    coincidencias = []
     for dominio in dominios:
-        if dominio_principal in dominio or dominio_bruto in dominio:
-            return dominio
+        if dominio_principal in dominio:
+            coincidencias.append(dominio)
+    
+    # Devuelve la coincidencia más larga, si hay alguna
+    if coincidencias:
+        return max(coincidencias, key=len)
     return None
 
 def get_domain(url):
