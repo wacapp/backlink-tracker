@@ -115,6 +115,7 @@ def encontrar_dominio(url):
     
     # Si hay una coincidencia exacta, devuélvela
     if dominio_bruto in dominios:
+        print('dominio_bruto')
         return dominio_bruto
     
     # Considera tanto el dominio principal como subdominios
